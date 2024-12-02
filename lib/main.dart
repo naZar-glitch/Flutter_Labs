@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-import 'interactive_counter.dart';
+import 'package:my_project1/login_screen.dart';
 
 void main() {
-  runApp(MyApp());
+  runApp(MaterialApp(
+    home: LoginScreen(),
+  ));
 }
