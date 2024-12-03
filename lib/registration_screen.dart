@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'home_screen.dart';
 
 class RegistrationScreen extends StatefulWidget {
   @override
@@ -6,86 +9,100 @@ class RegistrationScreen extends StatefulWidget {
 }
 
 class _RegistrationScreenState extends State<RegistrationScreen> {
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
-  final _nameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _confirmPasswordController = TextEditingController();
 
+  void _register() async {
+    String email = _emailController.text;
+    String password = _passwordController.text;
+    String confirmPassword = _confirmPasswordController.text;
 
-
-  void _register() {
-    final email = _emailController.text;
-    final password = _passwordController.text;
-    final name = _nameController.text;
-
-    // Перевірка правильності введеної пошти
-    if (!_isValidEmail(email)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Please enter a valid email address')),
-      );
+    // Перевірка на коректність введених даних
+    if (email.isEmpty || password.isEmpty || confirmPassword.isEmpty) {
+      _showErrorDialog('Please fill in all fields');
       return;
     }
 
-    // Перевірка правильності введеного паролю
-    if (!_isValidPassword(password)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Password must be between 6 and 8 characters')),
-      );
+    if (password != confirmPassword) {
+      _showErrorDialog('Passwords do not match');
       return;
     }
 
-    if (name.isEmpty || email.isEmpty || password.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Please fill in all fields')),
-      );
+    // Збереження даних
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setString('email', email);
+    await prefs.setString('password', password);
+
+    // Перевірка на наявність інтернету
+    ConnectivityResult connectivityResult = await Connectivity().checkConnectivity();
+    if (connectivityResult == ConnectivityResult.none) {
+      _showErrorDialog('No internet connection');
       return;
     }
 
-    final userData = {
-      'email': email,
-      'password': password,
-      'name': name,
-    };
-
-    Navigator.pushReplacementNamed(context, '/home', arguments: userData);
+    // Перехід на головний екран
+    Navigator.pushReplacementNamed(context, '/home');
   }
 
-  // Функція для перевірки правильності пошти
-  bool _isValidEmail(String email) {
-    final emailRegex = RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
-    return emailRegex.hasMatch(email);
-  }
-
-  // Функція для перевірки правильності паролю
-  bool _isValidPassword(String password) {
-    return password.length >= 6 && password.length <= 8;
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Error'),
+          content: Text(message),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Register')),
+      appBar: AppBar(
+        title: Text('Registration Screen'),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            TextField(
-              controller: _nameController,
-              decoration: InputDecoration(labelText: 'Name'),
-            ),
             TextField(
               controller: _emailController,
               decoration: InputDecoration(labelText: 'Email'),
             ),
+            SizedBox(height: 10),
             TextField(
               controller: _passwordController,
               decoration: InputDecoration(labelText: 'Password'),
+              obscureText: true,
+            ),
+            SizedBox(height: 10),
+            TextField(
+              controller: _confirmPasswordController,
+              decoration: InputDecoration(labelText: 'Confirm Password'),
               obscureText: true,
             ),
             SizedBox(height: 20),
             ElevatedButton(
               onPressed: _register,
               child: Text('Register'),
+            ),
+            SizedBox(height: 20),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: Text('Already have an account? Login'),
             ),
           ],
         ),
