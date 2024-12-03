@@ -10,6 +10,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   final _passwordController = TextEditingController();
   final _nameController = TextEditingController();
 
+
+
   void _register() {
     final email = _emailController.text;
     final password = _passwordController.text;

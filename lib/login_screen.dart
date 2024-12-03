@@ -1,51 +1,112 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'home_screen.dart';
+import 'registration_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   @override
   _LoginScreenState createState() => _LoginScreenState();
 }
 
+Future<bool> checkInternetConnection() async {
+  var connectivityResult = await (Connectivity().checkConnectivity());
+  return connectivityResult != ConnectivityResult.none;
+}
+
+
 class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
-  void _login() {
+  @override
+  void initState() {
+    super.initState();
+    _autoLogin();
+  }
+
+  // Функція для автологіну
+  void _autoLogin() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? savedEmail = prefs.getString('email');
+    String? savedPassword = prefs.getString('password');
+    
+    if (savedEmail != null && savedPassword != null) {
+      _emailController.text = savedEmail;
+      _passwordController.text = savedPassword;
+
+      // Перевірка інтернет з'єднання перед автологіном
+      ConnectivityResult connectivityResult = await Connectivity().checkConnectivity();
+      if (connectivityResult == ConnectivityResult.none) {
+        _showNoInternetDialog();
+      } else {
+        Navigator.pushReplacementNamed(context, '/home', arguments: {'email': savedEmail, 'password': savedPassword});
+      }
+    }
+  }
+
+  void _login() async {
     final email = _emailController.text;
     final password = _passwordController.text;
 
-    // Перевірка правильності введеної пошти
-    if (!_isValidEmail(email)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Please enter a valid email address')),
-      );
+    // Перевірка інтернет з'єднання
+    ConnectivityResult connectivityResult = await Connectivity().checkConnectivity();
+    if (connectivityResult == ConnectivityResult.none) {
+      _showNoInternetDialog();
       return;
     }
 
-    // Перевірка правильності введеного паролю
-    if (!_isValidPassword(password)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Password must be between 6 and 8 characters')),
-      );
-      return;
-    }
+    // Якщо все добре, збережемо дані в SharedPreferences
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setString('email', email);
+    await prefs.setString('password', password);
 
-    final userData = {
-      'email': email,
-      'password': password,
-    };
+    // Перехід на головний екран
+    Navigator.pushReplacementNamed(context, '/home', arguments: {'email': email, 'password': password});
 
-    Navigator.pushReplacementNamed(context, '/home', arguments: userData);
+    _showLoginDialog(true);
   }
 
-  // Функція для перевірки правильності пошти
-  bool _isValidEmail(String email) {
-    final emailRegex = RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
-    return emailRegex.hasMatch(email);
+  // Модальне вікно для повідомлення про успішний чи неуспішний логін
+  void _showLoginDialog(bool success) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(success ? 'Success' : 'Error'),
+          content: Text(success ? 'Login successful!' : 'Invalid email or password'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
-  // Функція для перевірки правильності паролю
-  bool _isValidPassword(String password) {
-    return password.length >= 6 && password.length <= 8;
+  // Модальне вікно для відсутності інтернет-зв'язку
+  void _showNoInternetDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('No Internet'),
+          content: Text('Please check your internet connection'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   void _navigateToRegistration() {
