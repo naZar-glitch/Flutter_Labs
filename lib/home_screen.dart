@@ -1,86 +1,32 @@
 import 'package:flutter/material.dart';
-import 'package:my_project1/login_screen.dart'; // Імпортуємо екран логіну
-import 'package:my_project1/profile_screen.dart'; // Імпортуємо екран профілю
 
-class HomeScreen extends StatefulWidget {
-  @override
-  _HomeScreenState createState() => _HomeScreenState();
-}
-
-class _HomeScreenState extends State<HomeScreen> {
-  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-
-  void logout() {
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => LoginScreen()),
-    );
-  }
-
-  void navigateToProfile() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => ProfileScreen()), // Виклик ProfileScreen
-    );
-  }
-
+class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final userData = ModalRoute.of(context)!.settings.arguments as Map<String, String>;
+
     return Scaffold(
-      key: _scaffoldKey,
       appBar: AppBar(
-        title: Text('Головний екран'),
-        centerTitle: true,
-        leading: IconButton(
-          icon: Icon(Icons.menu),
-          onPressed: () {
-            _scaffoldKey.currentState?.openDrawer();
-          },
-        ),
-      ),
-      drawer: Drawer(
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            DrawerHeader(
-              decoration: BoxDecoration(
-                color: Colors.blue,
-              ),
-              child: Text(
-                'Меню',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 24,
-                ),
-              ),
-            ),
-            ListTile(
-              leading: Icon(Icons.person),
-              title: Text('Профіль'),
-              onTap: navigateToProfile,
-            ),
-            ListTile(
-              leading: Icon(Icons.logout),
-              title: Text('Вийти'),
-              onTap: logout,
-            ),
-          ],
-        ),
+        title: Text('Home Screen'),
       ),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(
-              'Ласкаво просимо!',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 16),
+            Text('Welcome, ${userData['name']}!'),
+            Text('Email: ${userData['email']}'),
+            SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
-                _scaffoldKey.currentState?.openDrawer();
+                Navigator.pushReplacementNamed(context, '/profile', arguments: userData);
               },
-              child: Text('Відкрити меню'),
+              child: Text('Go to Profile'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pushReplacementNamed(context, '/');
+              },
+              child: Text('Logout'),
             ),
           ],
         ),
