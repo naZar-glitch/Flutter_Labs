@@ -42,3 +42,4 @@ linter:
     - use_decorated_box
     - use_function_type_syntax_for_parameters
     - use_super_parameters
+    

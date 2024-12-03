@@ -1,0 +1,30 @@
+// local_user_storage.dart
+import 'package:shared_preferences/shared_preferences.dart';
+
+class LocalUserStorage {
+  // Метод для збереження даних користувача
+  Future<void> saveUserData(Map<String, String> userData) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('email', userData['email']!);
+    await prefs.setString('password', userData['password']!);
+    await prefs.setString('name', userData['name']!);
+  }
+
+  // Метод для отримання даних користувача
+  Future<Map<String, String>> getUserData(String email) async {
+    final prefs = await SharedPreferences.getInstance();
+    final storedEmail = prefs.getString('email');
+    final storedPassword = prefs.getString('password');
+    final storedName = prefs.getString('name');
+
+    if (storedEmail != null && storedEmail == email) {
+      return {
+        'email': storedEmail,
+        'password': storedPassword!,
+        'name': storedName!,
+      };
+    }
+
+    return {}; // Повертаємо порожню карту, якщо дані не знайдені
+  }
+}
